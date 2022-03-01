@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  wall:
+    build:
+      context: ./sale-system-wall/sale-system-wall
+    volumes:
+      - './sale-system-wall/sale-system-wall:/app'
+      - '/app/node_modules'
+    networks:
+      - sale-system-net
+    ports:
+      - 3000:3000
+    restart: on-failure
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_SERVER=http://localhost:8000/
+    stdin_open: true
+  custom:
+    build:
+      context: ./sale-system-custom/sale-system-custom
+    volumes:
+      - './sale-system-custom/sale-system-custom:/app'
+      - '/app/node_modules'
+    networks:
+      - sale-system-net
+    ports:
+      - 4000:4000
+    restart: on-failure
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_SERVER=http://localhost:8000/
+    stdin_open: true
+
+  apiserver:
+    build:
+      context: ./sale-system
+    networks:
+      - sale-system-net
+    ports:
+      - 8000:80
+    restart: on-failure
+
+networks:
+  sale-system-net:

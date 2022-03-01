@@ -1,0 +1,39 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+pool: 
+ vmImage: ubuntu-latest
+
+resources:
+- repo: self
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- task: NuGetToolInstaller@1
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+- task: CmdLine@2
+  displayName: Build images
+  inputs:
+    script: 'docker-compose -f docker-compose-selenium.yaml build'
+- task: CmdLine@2
+  displayName: Run images
+  inputs: 
+    script: 'docker-compose -f docker-compose-selenium.yaml up -d'
+- task: DotNetCoreCLI@2
+  displayName: Run selenium tests
+  inputs:
+    command: test
+    projects: 'selenium-tests/**/WallSeleniumTests/**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+- task: CmdLine@2
+  displayName: Show logs from containers
+  condition: always()
+  inputs:
+    script: 'docker-compose logs'

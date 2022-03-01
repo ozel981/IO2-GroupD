@@ -1,0 +1,47 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  wall_dir: 'sale-system-wall/sale-system-wall'
+  custom_dir: 'sale-system-custom/sale-system-custom'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '5.x'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Install dotnet format'
+  inputs:
+    command: 'custom'
+    custom: 'tool'
+    arguments: 'update -g dotnet-format'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Lint apiserver'
+  inputs:
+    command: 'custom'
+    custom: 'format'
+    projects: '**/*.csproj'
+    arguments: '--check --verbosity diagnostic'
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '13.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    cd '$(Build.SourcesDirectory)/$(wall_dir)'
+    npm install
+    npm run lint --silent
+  displayName: 'Lint wall'
+
+- script: |
+    cd '$(Build.SourcesDirectory)/$(custom_dir)'
+    npm install
+    npm run lint --silent
+  displayName: 'Lint custom'
